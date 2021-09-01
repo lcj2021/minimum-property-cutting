@@ -12,8 +12,6 @@
 #include<sys/types.h>
 #include<sys/stat.h>
 #include<unistd.h>
-#include <dirent.h>
-
 using namespace std;
 
 class graph
@@ -36,11 +34,12 @@ public:
 	void greed2();
 	void greed3();
 	void unionBlock(vector<int> &choice,int goal);
+	void randEntity(string txt_name,string tag);
+	void randPre(string txt_name,string tag);
 	void metis(string txt_name,string tag);
+	void generateWeight();
 	void partition(string txt_name, string tag, string out_file);
-	void getFileList(string template_path, string result_path);
-	void readQueryResult(string template_path, string result_path, string tag);
-	int getSvCnt(); 
+	int getPreNum(); 
 	// void update();
 
 	string RDF;	
@@ -54,27 +53,25 @@ private:
 	vector<string> IDToEntity;
 	unordered_map<string,int> predicateToID;
 	vector<string> IDToPredicate;
-	vector<vector<pair<int, int> > > edge;
-	vector<vector<pair<int, int> > > edgeOfMultiPre;
+	vector<vector<pair<int,int> > >edge;
 	vector<pair<int,string> >otherEdge;
 
-	//coarseningPoint: singlePre		1: multiPre
-	vector<unordered_map<int, int> >coarseningPoint;
-	vector<unordered_map<int, int> >coarseningPoint1;
+	//coarseningPoint[preID]表示preID的谓词
+	vector<unordered_map<int,int> >coarseningPoint;
 
 	//每个实体对应三元组数量
 	vector<int> entityTriples;
 	set<pair<string,int> >finalResult;
 
 
-	unordered_map<string,int> edge_cnt;			// edge_cnt[IDToPredicate[i]] == edge[i].size()
+	unordered_map<string,int> edge_cnt;
 
 	//每个谓词对应边的数量
 	// edge_cnt : the key is the property and the value is the count of the property
 	unordered_map<string, double> edge_weight;
 
 	unordered_map<string, int> group;
-	vector<vector<pair<pair<string, string>, string > > > edgeGroup;
+	vector<vector<pair<pair<string,string>, string > > > edgeGroup;
 
 	
 	vector<bool> invalid;
@@ -85,23 +82,9 @@ private:
 
 	//谓词种类数
 	int preType;
-	int svCnt;
 
 	long long limit;	
 	long long ans;	
 	long long crossEgdeCnt;
 	long long invalidEdgeCnt;																																		
-
-	//read path of query & result
-	vector<string> query_template;
-	vector<string> query_result;
-	unordered_map<string, int> queryID;
-	int queryCnt;
-	int validResultCnt;
-
-	//read result of query
-	vector<vector <string> > patternQueryNode;
-	vector<string> s;
-	vector<string> s0;
-	vector<string> s1;
 };
