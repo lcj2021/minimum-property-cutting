@@ -1,3 +1,3 @@
-# minimum-property-cutting-v2
+# minimum-property-cutting
 
-### Author: Cen Yan HNU, Chengjun Liu Hnu
+### Author: Cen Yan HNU, Chengjun Liu HNU
