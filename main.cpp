@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 		// Find the optimal partitioning results when the count of properties is smaller than 20
 		if (predNum <= 20)
 			test->unionEdgeForEnum();
-		// Use similarity & WCC combo greed trategy based on stl::bitset, must set stack size before start
+		// Use similarity & WCC combo greed trategy based on bitset, must set stack size before start
 		else if (predNum <= 40 && entityNum <= 20000000)
 			test->unionEdgeForGreed1_2(1);
 		// Use only WCC greed strategy
