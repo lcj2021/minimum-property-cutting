@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
 		// Use only WCC greed strategy
 		else if (predNum <= 120)
 			test->unionEdgeForGreed1_2(2);
-		// select directly after sorting properties by descending order until limit reached
+		// Select directly after sorting properties by descending order until limit reached
 		else if (predNum > 120)
 			test->greed3();
 
