@@ -60,7 +60,7 @@ private:
 	//coarseningPoint[preID]表示preID的谓词
 	vector<unordered_map<int, int>> coarseningPoint;
 
-	//每个实体对应三元组数量
+	// key: entityID		value: the count of triples containing entityID
 	vector<int> entityTriples;
 
 	// edge_cnt : the key is the property and the value is the count of the property
@@ -79,7 +79,7 @@ private:
 	// entityCnt : entity count
 	long long entityCnt;
 
-	//谓词种类数
+	// predicate count
 	int preType;
 
 	long long limit;
