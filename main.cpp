@@ -48,3 +48,5 @@ int main(int argc, char *argv[])
 // ./mpc3 LUBM100M.nt LUBM100M_Enum 1 8
 // ./mpc3 LUBM100M.nt LUBM100M_Greed1 1 8
 // ./mpc3 LUBM1M.nt LUBM1M_test 2 4
+// ./mpc3 dbpedia2014_10M.nt dbpedia2014_data 1 8
+// ./mpc3 dbpedia2014_100M.nt dbpedia2014_data 1 8

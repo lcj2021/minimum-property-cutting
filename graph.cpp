@@ -91,7 +91,7 @@ void graph::loadGraph(string txt_name, string tag)
 	// for (int i = 1; i <= preType; ++i)
 	// 	cout << "property id " << i << " : " << edge[i].size() << ' ' << subjectSetOfPredicate[i].count() << ' ' << objectSetOfPredicate[i].count() << endl;
 
-	limit = entityCnt / part / 2;
+	limit = entityCnt / part / 0.8;
 	printf("limit: %lld\n", limit);
 	printf("triples: %lld\n", triples);
 	printf("entityCnt: %lld\n", entityCnt);
