@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <time.h>
+#include "utils.hpp"
 //choice is used to determine if a property is selected as internal, 1 means internal
 
 graph::graph() {}
@@ -36,21 +37,25 @@ long long graph::getEntityNum()
 
 void graph::loadGraph(string txt_name, string tag)
 {
+	string line;
 	ifstream in(txt_name);
 
 	
 	cout << txt_name << "========" << endl;
 	vector<pair<int, int>> tmp1;
 	bitset<EMAX> *tmp2 = new bitset<EMAX>;
-	string line;
 	while (getline(in, line))
 	{
-		if (triples % 10000 == 0)
+		if (triples % 100000 == 0)
 			cout << "loading triples : " << triples << endl;
 		triples++;
-		line.resize(line.length() - 2);
+		// line.resize(line.length() - 2);
+		
 		vector<string> s;
-		s = split(line, tag);
+		if (line.find_last_of(".") != string::npos)
+			line = line.substr(0, line.find_last_of("."));
+		Utils::trim(line);
+		s = Utils::split(line, tag);
 
 		predicate.insert(s[1]);
 
@@ -60,6 +65,12 @@ void graph::loadGraph(string txt_name, string tag)
 			{
 				entityToID[s[i]] = ++entityCnt;
 				IDToEntity.push_back(s[i]);
+				entityTriples.push_back(0);
+			}
+			else if ((s[i][0] == '"') && strEntityToID.count(s[i]) == 0)
+			{
+				strEntityToID[s[i]] = ++strEntityCnt;
+				IDToStrEntity.push_back(s[i]);
 				entityTriples.push_back(0);
 			}
 
@@ -75,31 +86,30 @@ void graph::loadGraph(string txt_name, string tag)
 			if (predicateToID.count(s[1]) == 0)
 			{
 				predicateToID[s[1]] = ++preType;
-				subjectSetOfPredicate.push_back(*tmp2);
-				objectSetOfPredicate.push_back(*tmp2);
+//				subjectSetOfPredicate.push_back(*tmp2);
+//				objectSetOfPredicate.push_back(*tmp2);
 				IDToPredicate.push_back(s[1]);
 				edge.push_back(tmp1);
 			}
 			int preid = predicateToID[s[1]];
 			edge[preid].push_back(make_pair(a, b));
 			entityTriples[b]++;
-			subjectSetOfPredicate[preid].set(a, 1);
-			objectSetOfPredicate[preid].set(b, 1);
+//			subjectSetOfPredicate[preid].set(a, 1);
+//			objectSetOfPredicate[preid].set(b, 1);
 		}
 	}
 	in.close();
 	// for (int i = 1; i <= preType; ++i)
 	// 	cout << "property id " << i << " : " << edge[i].size() << ' ' << subjectSetOfPredicate[i].count() << ' ' << objectSetOfPredicate[i].count() << endl;
 
-	limit = entityCnt / part / 0.8;
+	limit = entityCnt / part / 1.5;
 	printf("limit: %lld\n", limit);
 	printf("triples: %lld\n", triples);
 	printf("entityCnt: %lld\n", entityCnt);
+	printf("strEntityCnt: %lld\n", strEntityCnt);
 	printf("predicate: %lu\n", predicate.size());
-
 	printf("entity->preType: %d\n", preType);
 
-	printf("sizeof edge_cnt : %ld\n", edge_cnt.size());
 	delete tmp2;
 }
 
@@ -607,8 +617,9 @@ void graph::greed3()
 
 	vector<int> choice(preType + 1, 0);
 	vector<pair<int, int>> arr;
+	vector<int> internalAddOrder;
 
-	for (int preID = 1; preID <= preType; preID++)
+	for (int preID = preType; preID >= 1; -- preID)
 	{
 		// if the edge cnt of preID is in smaller than threshold, choose it as internal
 		if (edge_cnt[IDToPredicate[preID]] < threshold)
@@ -628,6 +639,7 @@ void graph::greed3()
 				}
 			}
 			choice[preID] = 1;
+			internalAddOrder.push_back(preID);
 		}
 		else
 		{
@@ -694,6 +706,7 @@ void graph::greed3()
 		if (invalid[preID])
 			break;
 		choice[preID] = 1;
+		internalAddOrder.push_back(preID);
 	}
 
 	int crossEdge = 0;
@@ -701,6 +714,8 @@ void graph::greed3()
 		if (choice[preID] == 0)
 			cout << preID << "	" << IDToPredicate[preID] << endl, crossEdge++;
 	printf("crossEdge: %d\n", crossEdge);
+	puts("internal choosing order: ");
+	for (auto preid : internalAddOrder)		cout << preid << " : " << IDToPredicate[preid] << endl;
 	puts("\n==========================================================================================\n");
 	unionBlock(choice, part);
 }
@@ -776,16 +791,22 @@ void graph::unionBlock(vector<int> &choice, int goal)
 	for (int i = 1; i <= goal; i++)
 		printf("%d %d\n", i, CNT[i]);
 
-	ofstream File(RDF + "crossingEdges.txt");
+	long long crossing_property_cnt = 0;
+	ofstream File(RDF + "crossingEdges.txt");	// 1 for crossing
 	for (unordered_map<string, int>::iterator it = edge_cnt.begin(); it != edge_cnt.end(); it++)
 	{
 		File << it->first << "\t" << it->second << "\t";
 		if (predicateToID.count(it->first))
-			File << (!choice[predicateToID[it->first]]);
+			File << (!choice[predicateToID[it->first]]),
+			crossing_property_cnt += !choice[predicateToID[it->first]];
 		else
 			File << "0";
 		File << endl;
 	}
+
+	File << "\n==========================================================================================\n" << endl;
+	File << "crossing property" << "\t" << crossing_property_cnt << endl;
+
 	File.close();
 }
 
@@ -830,7 +851,7 @@ void graph::randPre(string txt_name, string tag)
 	while (getline(in, line))
 	{
 		triples++;
-		if (triples % 10000 == 0)
+		if (triples % 100000 == 0)
 			cout << "loading triples for vertical partitioning : " << triples << endl;
 		line.resize(line.length() - 2);
 		vector<string> s;
@@ -878,7 +899,7 @@ void graph::metis(string txt_name, string tag)
 	while (getline(in, str))
 	{
 		triples++;
-		if (triples % 10000 == 0)
+		if (triples % 100000 == 0)
 			cout << "loading triples : " << triples << endl;
 		str.resize(str.length() - 2);
 		vector<string> s;
@@ -930,39 +951,57 @@ void graph::partition(string txt_name, string tag, string out_file)
 	string line;
 	ifstream readGraph(txt_name.data());
 	triples = 0;
+	long long crossing_edge_cnt = 0;
 
 	vector<pair<pair<string, string>, string>> tmp;
 	for (int i = 1; i <= part; ++i)
 		edgeGroup.push_back(tmp);
+	
+	int partCnt = part;
+
+	ofstream out[partCnt];
+	for (int i = 0; i < partCnt; ++ i)
+	{
+		string SubGraphName = out_file + to_string(i);
+		out[i].open(SubGraphName, ios::out);
+	}
 
 	while (getline(readGraph, line))
 	{
 		triples++;
-		if (triples % 10000 == 0)
+		if (triples % 100000 == 0)
 			cout << "grouping triples : " << triples << endl;
-		line.resize(line.length() - 2);
+
 		vector<string> s;
-		s = split(line, tag);
+		if (line.find_last_of(".") != string::npos)
+			line = line.substr(0, line.find_last_of("."));
+		Utils::trim(line);
+		s = Utils::split(line, tag);
 
 		int u = entityToID[s[0]], v = entityToID[s[2]], p = predicateToID[s[1]];
-		// // if(u == 0)	continue;
+		// if(u == 0)	continue;
 		int uID = group[s[0]], vID = group[s[2]];
-		// cout << triples << ":" << u << " " << v << " ";
-		edgeGroup[uID].push_back({{s[0], s[2]}, s[1]});
+		// cout << triples << ":" << u << " " << v << " " << uID << ' ' << vID << ' ' << s[0] << endl;
+        int new_v;
+		if (v == 0)
+			new_v = entityCnt + strEntityToID[s[2]];
+		else
+			new_v = v;
+		// edgeGroup[uID].push_back({{u, new_v}, s[1]});
+		out[uID] << s[0] << " " << s[1] << " " << s[2] << " ." << endl;
 		if (uID != vID && v != 0)
-			edgeGroup[vID].push_back({{s[0], s[2]}, s[1]});
+		{
+			// edgeGroup[vID].push_back({{u, new_v}, s[1]});
+			++ crossing_edge_cnt;
+			out[vID] << s[0] << " " << s[1] << " " << s[2] << " ." << endl;
+		}
 	}
 
-	int partCnt = part;
+	cout << "entityCnt : " << entityCnt << endl;
+	cout << "strEntity : " << strEntityToID.size() << endl;
+	cout << "predicate : " << predicate.size() << endl;
+	cout << "crossingEdge: " << crossing_edge_cnt << endl;
 
-	for (int i = 0; i < partCnt; ++i)
-	{
-		string SubGraphName = out_file + to_string(i) + ".txt";
-		ofstream out(SubGraphName);
-		int groupSize = edgeGroup[i].size();
-		cout << groupSize << endl;
-		for (int j = 0; j < groupSize; ++j)
-			out << edgeGroup[i][j].first.first << " " << edgeGroup[i][j].second << " " << edgeGroup[i][j].first.second << " ." << endl;
-		out.close();
-	}
+	ofstream File(RDF + "crossingEdges.txt", ios::app);
+	File << "crossing edge" << "\t" << crossing_edge_cnt << endl << endl;
 }
